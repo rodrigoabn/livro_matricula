@@ -1,6 +1,15 @@
 from fpdf import FPDF
 from datetime import datetime
 import pandas as pd
+import math
+
+def fix_text(text):
+    if text is None: return ""
+    s = str(text)
+    s = s.replace('–', '-').replace('—', '-')
+    s = s.replace('“', '"').replace('”', '"')
+    s = s.replace("‘", "'").replace("’", "'")
+    return s.encode('latin-1', 'replace').decode('latin-1')
 
 class PDF(FPDF):
     def __init__(self, titulo_doc, dados_escola):
@@ -19,15 +28,15 @@ class PDF(FPDF):
         usable_width = page_width - 2 * margin_left
         
         # Dados Escola
-        nome = self.dados_escola.get('nome', '')
-        inep = self.dados_escola.get('inep', '')
-        ano = self.dados_escola.get('ano_letivo', '')
-        end = self.dados_escola.get('logradouro', '')
-        num = self.dados_escola.get('numero', '')
-        bairro = self.dados_escola.get('bairro', '')
-        cep = self.dados_escola.get('cep', '')
-        tel = self.dados_escola.get('telefone', '')
-        email = self.dados_escola.get('email', '')
+        nome = fix_text(self.dados_escola.get('nome', ''))
+        inep = fix_text(self.dados_escola.get('inep', ''))
+        ano = fix_text(self.dados_escola.get('ano_letivo', ''))
+        end = fix_text(self.dados_escola.get('logradouro', ''))
+        num = fix_text(self.dados_escola.get('numero', ''))
+        bairro = fix_text(self.dados_escola.get('bairro', ''))
+        cep = fix_text(self.dados_escola.get('cep', ''))
+        tel = fix_text(self.dados_escola.get('telefone', ''))
+        email = fix_text(self.dados_escola.get('email', ''))
 
         self.set_y(5)  # Margem superior reduzida para 5mm
         self.set_x(margin_left)
@@ -138,8 +147,8 @@ class PDF(FPDF):
         # "colocando as informações lado a lado , com espaçamento entre elas"
         
         # Labels e Valores
-        turma_txt = f"Turma: {info.get('turma', '')}"
-        matriz_txt = f"Matriz: {info.get('matriz', '')}"
+        turma_txt = f"Turma: {fix_text(info.get('turma', ''))}"
+        matriz_txt = f"Matriz: {fix_text(info.get('matriz', ''))}"
         
         # Formatar datas se existirem e forem objetos date/datetime
         dt_censo = info.get('data_censo', '')
@@ -150,7 +159,7 @@ class PDF(FPDF):
         if hasattr(dt_enc, 'strftime'): dt_enc = dt_enc.strftime('%d/%m/%Y')
         enc_txt = f"Data de Encerramento: {dt_enc}"
         
-        dias_txt = f"Dias Letivos: {info.get('dias_letivos', '')}"
+        dias_txt = f"Dias Letivos: {fix_text(info.get('dias_letivos', ''))}"
         
         # Espaçamento manual com string única (mais seguro para alignment L)
         spacer = "   |   "
@@ -315,7 +324,7 @@ def gerar_pdf_matricula(df, dados_escola, titulo_documento):
         'PNE': 8,
         'Pós Censo': 10, 
         'Situação': 18,
-        'Data da situação': 15
+        'Data da situação': 13
     }
     # Ajuste manual para caber em 275mm (A4 Landscape usable)
     # Soma larguras atuais: 4+18+18+45+14+8+6+30+30+18+18+16+26+15+14 = 280.
@@ -341,78 +350,173 @@ def gerar_pdf_matricula(df, dados_escola, titulo_documento):
     # Função Local para Print Row
     def print_row(pdf_instance, data_values, widths, is_header=False):
         line_height = 3 if is_header else 4
+        # Altura mínima: 2 linhas de texto (4 * 2 = 8mm) se for dados
+        min_h = 8 if not is_header else line_height
+        
         start_y = pdf_instance.get_y()
         start_x = pdf_instance.get_x()
         
-        posicoes_finais = []
-        current_x = start_x
-        max_h = line_height # Altura mínima da linha
+        # Colunas com alinhamento central
+        center_cols = [
+            '#',
+            'Grupo/Ano/Fase', 
+            'Matrícula', 
+            'CPF', 
+            'Data de Nascimento', 
+            'Idade (31/03)', 
+            'Sexo', 
+            'Data de Ingresso', 
+            'PNE', 
+            'Pós Censo', 
+            'Data da situação'
+        ]
         
-        # Passada 1: Desenhar Texto e Medir Altura
-        for i, text in enumerate(data_values):
+        # Passada 1: Calcular altura necessária (Line counting simulado)
+        cell_info = []
+        max_h = min_h
+        
+        for i, raw_val in enumerate(data_values):
+            text = fix_text(raw_val)
             w = widths[i]
-            pdf_instance.set_xy(current_x, start_y)
+            col_name = colunas_finais[i]
             
-            # Alinhamento
-            align = 'C' if is_header else 'L' 
-            # Ajuste fino: Se não header e for colunas pequenas, talvez 'C' fique melhor?
-            # Manter padrão 'L' geral ou 'C' específico.
-            if not is_header and colunas_finais[i] in ['#', 'Idade (31/03)', 'Sexo', 'PNE', 'Data de Ingresso', 'Data da situação', 'Matrícula', 'CPF', 'Pós Censo']:
-                align = 'C'
-            
-            # Ajustar fonte para casos especiais (apenas para dados, não headers)
+            # Lógica de fonte reduzida
+            current_font_size = 6
+            special_font = False
             if not is_header:
-                text_str = str(text)
-                # Nacionalidade longa
-                if colunas_finais[i] == 'Nacionalidade' and text_str == 'Brasileira - Nascido no exterior ou naturalizado':
-                    pdf_instance.set_font('Arial', '', 5)
-                # Filiação sem informação
-                elif colunas_finais[i] in ['Filiação 1', 'Filiação 2'] and text_str == 'NÃO CONSTA NA CERTIDÃO DE NASCIMENTO':
-                    pdf_instance.set_font('Arial', '', 5)
-                else:
-                    pdf_instance.set_font('Arial', '', 6)
+                txt_str = str(text)
+                if col_name == 'Nacionalidade' and 'Brasileira - Nascido no exterior' in txt_str:
+                     current_font_size = 5
+                     special_font = True
+                elif col_name in ['Filiação 1', 'Filiação 2'] and 'NÃO CONSTA' in txt_str:
+                     current_font_size = 5
+                     special_font = True
             
-            # Desenha texto
-            pdf_instance.multi_cell(w, line_height, str(text), border=0, align=align)
+            # Setar fonte para medição
+            style = 'B' if is_header else ''
+            pdf_instance.set_font('Arial', style, current_font_size)
             
-            y_end = pdf_instance.get_y()
-            h_cell = y_end - start_y
-            if h_cell > max_h:
-                max_h = h_cell
+            # Ajuste de largura útil para cálculo de quebra de linha
+            c_margin = getattr(pdf_instance, 'c_margin', 1.0) # 1.0 default if missing, but usually ~0.35mm
+            effective_w = w - (2 * c_margin)
+            if effective_w < 0: effective_w = 0.1 # defensive
             
-            posicoes_finais.append((current_x, w))
-            current_x += w
+            # Contar linhas
+            if not text:
+                num_lines = 1
+            else:
+                num_lines = 0
+                lines = text.split('\n')
+                space_w = pdf_instance.get_string_width(' ')
+                
+                for line in lines:
+                    if not line:
+                        num_lines += 1
+                        continue
+                    
+                    words = line.split(' ')
+                    curr_line_w = 0
+                    # Palavra por palavra
+                    for idx_w, word in enumerate(words):
+                        word_w = pdf_instance.get_string_width(word)
+                        # Se primeira palavra (e cabe na largura ou é maior que largura total)
+                        if curr_line_w == 0:
+                            if word_w > effective_w:
+                                # Palavra maior que a célula (vai quebrar?)
+                                # FPDF normalmente imprime e estoura se for maior que w, mas MultiCell força wrap?
+                                # Assumindo wrap conservador.
+                                wrap_count = math.ceil(word_w / effective_w)
+                                num_lines += wrap_count if wrap_count > 0 else 1
+                                curr_line_w = 0 
+                            else:
+                                curr_line_w = word_w
+                        else:
+                            if curr_line_w + space_w + word_w > effective_w:
+                                # Quebra linha
+                                num_lines += 1
+                                curr_line_w = word_w
+                            else:
+                                curr_line_w += space_w + word_w
+                    num_lines += 1
             
-        # Restaurar fonte padrão após ajustes específicos
-        if not is_header:
-            pdf_instance.set_font('Arial', '', 6)
+            # Calcular altura desta celula
+            cell_h = num_lines * line_height
+            if cell_h > max_h:
+                max_h = cell_h
+            
+            cell_info.append({
+                'text': text,
+                'w': w,
+                'h': cell_h,
+                'special_font': special_font,
+                'font_size': current_font_size
+            })
 
-        # Se for header, aplicar fundo cinza
-        if is_header:
-            current_x = start_x
-            for w in widths:
-                pdf_instance.set_fill_color(220, 220, 220)
-                pdf_instance.rect(current_x, start_y, w, max_h, 'F')
-                current_x += w
-            
-            # Redesenhar texto centralizado verticalmente sobre o fundo
-            current_x = start_x
-            for i, text in enumerate(data_values):
-                w = widths[i]
-                align = 'C'
-                pdf_instance.set_xy(current_x, start_y)
-                pdf_instance.multi_cell(w, line_height, str(text), border=0, align=align)
-                current_x += w
+        # Restaurar fonte padrão
+        pdf_instance.set_font('Arial', '', 6)
 
-        # Segundo loop: desenha bordas com a altura total
+        # Checar Page Break Manual se a linha for muito alta (opcional, FPDF lida com multi_cell mas aqui desenhamos rect)
+        # Se start_y estiver muito embaixo, add_page.
+        page_h = 210
+        margin_b = 10
+        if start_y + max_h > page_h - margin_b:
+             pdf_instance.add_page()
+             if is_header:
+                  # Se for header e quebrou página, reseta Y?
+                  # print_table_header lida com isso se start_y for novo.
+                  pass
+             start_y = pdf_instance.get_y()
+             start_x = pdf_instance.get_x()
+
+        # Passada 2: Desenhar
         current_x = start_x
-        for w in widths:
-            pdf_instance.set_xy(current_x, start_y)
-            pdf_instance.rect(current_x, start_y, w, max_h)
+        
+        for i, info in enumerate(cell_info):
+            w = info['w']
+            text = info['text']
+            
+            # Desenhar Borda/Fundo
+            if is_header:
+                pdf_instance.set_fill_color(220, 220, 220)
+                pdf_instance.rect(current_x, start_y, w, max_h, 'FD')
+            else:
+                pdf_instance.rect(current_x, start_y, w, max_h, 'D')
+            
+            # alinhamento
+            align = 'L'
+            col_name = colunas_finais[i]
+            if is_header:
+                align = 'C'
+            elif col_name in center_cols:
+                align = 'C'
+            
+            # Fonte
+            if info['special_font']:
+                pdf_instance.set_font('Arial', '', info['font_size'])
+            elif is_header:
+                pdf_instance.set_font('Arial', 'B', 6)
+            else:
+                pdf_instance.set_font('Arial', '', 6)
+            
+            # Posição Y (Centralizada ou Topo)
+            content_h = info['h']
+            top_align_cols = ['Nome', 'Filiação 1', 'Filiação 2', 'Naturalidade', 'Nacionalidade', 'Situação']
+            
+            if not is_header and col_name in top_align_cols:
+                y_offset = 0.5
+            else:
+                y_offset = (max_h - content_h) / 2
+            
+            # Renderizar Texto
+            pdf_instance.set_xy(current_x, start_y + y_offset)
+            pdf_instance.multi_cell(w, line_height, text, 0, align)
+            
             current_x += w
             
-        # Posiciona cursor para próxima linha
+        # Mover Y para fim da linha
         pdf_instance.set_y(start_y + max_h)
+        # Resetar fonte
+        pdf_instance.set_font('Arial', '', 6)
 
     # Função para desenhar o cabeçalho da tabela
     def print_table_header():
@@ -613,7 +717,7 @@ def gerar_capa(dados_escola):
     y_cursor = pdf.get_y() + 15
     
     # 4. Nome da Unidade
-    nome_escola = dados_escola.get('nome', 'Nome da Escola Não Informado')
+    nome_escola = fix_text(dados_escola.get('nome', 'Nome da Escola Não Informado'))
     pdf.set_y(y_cursor)
     pdf.set_font('Arial', 'B', 20)
     pdf.multi_cell(0, 12, nome_escola.upper(), 0, 'C')
@@ -621,7 +725,7 @@ def gerar_capa(dados_escola):
     y_cursor = pdf.get_y() + 20
     
     # 5. Título com Ano Letivo
-    ano = dados_escola.get('ano_letivo', '____')
+    ano = fix_text(dados_escola.get('ano_letivo', '____'))
     titulo = f"Livro de Matrículas - {ano}"
     
     pdf.set_y(y_cursor)
