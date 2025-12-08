@@ -312,7 +312,6 @@ def gerar_pdf_matricula(df, dados_escola, titulo_documento):
         'Naturalidade': 18,
         'Nacionalidade': 18,
         'Data de Ingresso': 15,
-        'Data de Ingresso': 15,
         'PNE': 8,
         'Pós Censo': 10, 
         'Situação': 18,

@@ -62,16 +62,38 @@ with st.container():
     col1, col2 = st.columns(2)
     with col1:
         ano_atual = datetime.now().year
-        # Usando key para manter estado se necessário, mas o padrão já funciona
-        ano_letivo = st.number_input("Ano Letivo", min_value=2024, value=max(2025, ano_atual), step=1, format="%d")
+        
+        # Callback para atualizar a data do censo quando o ano mudar
+        def atualizar_data_censo():
+            # Pega o valor novo do ano diretamente do estado do widget
+            novo_ano = st.session_state.ano_letivo_input
+            nova_data = ultimo_dia_maio(int(novo_ano))
+            # Atualiza diretamente a chave do widget de data
+            st.session_state['data_censo_picker'] = nova_data
+
+        ano_letivo = st.number_input(
+            "Ano Letivo",
+            min_value=2024, 
+            value=max(2025, ano_atual), 
+            step=1, 
+            format="%d",
+            key="ano_letivo_input",
+            on_change=atualizar_data_censo
+        )
         
         ofertou_eja_1 = st.checkbox("Ofertou EJA no 1º SEM")
         ofertou_eja_2 = st.checkbox("Ofertou EJA no 2º SEM")
     
     with col2:
-        # Correção do BUG: Como removemos st.form, isso vai atualizar sempre que ano_letivo mudar
-        data_ref = ultimo_dia_maio(int(ano_letivo))
-        st.text_input("Data de referência do Censo Escolar", value=data_ref.strftime("%d/%m/%Y"), disabled=True)
+        # Inicialização garantia da data correta para o ano inicial
+        if 'data_censo_picker' not in st.session_state:
+            st.session_state['data_censo_picker'] = ultimo_dia_maio(int(ano_letivo))
+
+        data_ref = st.date_input(
+            "Data de referência do Censo Escolar",
+            format="DD/MM/YYYY",
+            key="data_censo_picker" 
+        )
 
 
 
