@@ -125,7 +125,24 @@ class PDF(FPDF):
         # self.rect(x_start, y_row2, usable_width, h_row2)
         
         self.set_font('Arial', 'B', 12)
-        titulo_formatado = f"Livro de Matrículas {ano}"
+        # Lógica de Sufixo do Título baseada no botão e curso
+        suffix = ""
+        is_btn_2 = "EJA 2º SEM" in self.titulo_doc
+        
+        # A informação do curso está em current_header_info (populado antes do add_page)
+        desc_curso = self.current_header_info.get('descricao_curso', '')
+        # Verificar se o curso corresponde a alguma fase EJA (Iniciais ou Finais)
+        eja_phases = ['Educação de Jovens e Adultos Fases Iniciais', 'Educação de Jovens e Adultos Fases Finais']
+        is_eja_phase = any(phase in desc_curso for phase in eja_phases)
+        
+        if is_btn_2:
+            suffix = "(EJA - 2º SEM)"
+        elif is_eja_phase:
+            suffix = "(EJA - 1º SEM)"
+        else:
+            suffix = ""
+    
+        titulo_formatado = f"Livro de Matrículas {ano}{suffix}"
       
         x_start1 = (x_start + 2)
         self.set_xy(x_start1, y_row2) # Retirado o + 1.5 para alinhar ao topo
@@ -587,6 +604,8 @@ def gerar_pdf_matricula(df, dados_escola, titulo_documento):
                  
         header_info['data_encerramento'] = enc_final
         header_info['dias_letivos'] = dias_final
+        # Armazenar Descrição do Curso para uso no Cabeçalho
+        header_info['descricao_curso'] = desc_curso
         
         # Setar no objeto PDF
         pdf.current_header_info = header_info
