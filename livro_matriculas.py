@@ -211,10 +211,14 @@ def carregar_depara():
         st.error(f"Erro ao carregar DEPARA.csv: {e}")
         return None
 
-def tratar_dados(df, ano_letivo_ref):
-    # 1. Converter datas para DD/MM/yyyy
+def tratar_dados(df, ano_letivo_ref, data_censo_ref):
+    # 1. Converter datas para DD/MM/yyyy e criar temp para cálculos
     colunas_datas = ["Data de Matrícula", "Data do Último Procedimento"]
     
+    # Temp para Data de Matrícula
+    if "Data de Matrícula" in df.columns:
+        df["_dt_matricula_temp"] = pd.to_datetime(df["Data de Matrícula"], errors='coerce', dayfirst=True)
+
     for col in colunas_datas:
         if col in df.columns:
             # Garante dayfirst=True para evitar warnings e erros com datas DD/MM
@@ -316,6 +320,25 @@ def tratar_dados(df, ano_letivo_ref):
             
             df['Data do Último Procedimento'] = df.apply(tratar_data_situacao, axis=1)
         
+    # 7. Criar Coluna "Pós Censo"
+    # Preenchido com "Sim" se 'Data de Matrícula' (usando temp) for igual ou superior a 'Data de referência do Censo Escolar'
+    if "_dt_matricula_temp" in df.columns and data_censo_ref:
+        try:
+            # Garantir que data_censo_ref seja Timestamp para comparação
+            censo_ts = pd.Timestamp(data_censo_ref)
+            
+            df['Pós Censo'] = df['_dt_matricula_temp'].apply(
+                lambda x: "Sim" if pd.notnull(x) and x >= censo_ts else "-"
+            )
+        except Exception as e:
+            st.warning(f"Erro ao calcular Pós Censo: {e}")
+            df['Pós Censo'] = "-"
+            
+        # Remover coluna temporária
+        df.drop(columns=["_dt_matricula_temp"], inplace=True)
+    else:
+         df['Pós Censo'] = "-"
+
     return df
 
 from pdf_generator import gerar_pdf_matricula, gerar_capa
@@ -444,7 +467,7 @@ with col_imp1:
             else:
                 df1 = pd.read_excel(uploaded_file1)
             
-            df1 = tratar_dados(df1, ano_letivo)
+            df1 = tratar_dados(df1, ano_letivo, dados_escola['data_censo'])
             renderizar_ui_processamento(df1, "Livro de Matrículas", dados_escola)
             
         except Exception as e:
@@ -464,7 +487,7 @@ with col_imp2:
             else:
                 df2 = pd.read_excel(uploaded_file2)
             
-            df2 = tratar_dados(df2, ano_letivo)
+            df2 = tratar_dados(df2, ano_letivo, dados_escola['data_censo'])
             renderizar_ui_processamento(df2, "Livro EJA 2º SEM", dados_escola)
             
         except Exception as e:

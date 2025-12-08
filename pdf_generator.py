@@ -254,6 +254,7 @@ def gerar_pdf_matricula(df, dados_escola, titulo_documento):
         # app.py processa e entrega 'Data de Matrícula'.
         'Data de Matrícula': 'Data de Ingresso',
         'Deficiência, TEA, Altas Habilidades ou Superdotação': 'PNE',
+        'Pós Censo': 'Pós Censo',
         'Situação no Ano Selecionado': 'Situação',
         'Data do Último Procedimento': 'Data da situação'
     }
@@ -311,7 +312,9 @@ def gerar_pdf_matricula(df, dados_escola, titulo_documento):
         'Naturalidade': 18,
         'Nacionalidade': 18,
         'Data de Ingresso': 15,
-        'PNE': 8, 
+        'Data de Ingresso': 15,
+        'PNE': 8,
+        'Pós Censo': 10, 
         'Situação': 18,
         'Data da situação': 15
     }
@@ -329,7 +332,9 @@ def gerar_pdf_matricula(df, dados_escola, titulo_documento):
         'Data de Nascimento': 'Data de\n Nascimento',
         'Data de Ingresso': 'Data de\n Ingresso',
         'Filiação 1': 'Filiação 1',
-        'Filiação 2': 'Filiação 2'
+        'Filiação 1': 'Filiação 1',
+        'Filiação 2': 'Filiação 2',
+        'Pós Censo': 'Pós \n Censo'
     }
     # Obs: Coluna '#' não está no map, então usará o próprio nome '#', o que é correto.
     headers_texto = [headers_map.get(col, col) for col in colunas_finais]
@@ -353,7 +358,7 @@ def gerar_pdf_matricula(df, dados_escola, titulo_documento):
             align = 'C' if is_header else 'L' 
             # Ajuste fino: Se não header e for colunas pequenas, talvez 'C' fique melhor?
             # Manter padrão 'L' geral ou 'C' específico.
-            if not is_header and colunas_finais[i] in ['#', 'Idade (31/03)', 'Sexo', 'PNE', 'Data de Ingresso', 'Data da situação', 'Matrícula', 'CPF']:
+            if not is_header and colunas_finais[i] in ['#', 'Idade (31/03)', 'Sexo', 'PNE', 'Data de Ingresso', 'Data da situação', 'Matrícula', 'CPF', 'Pós Censo']:
                 align = 'C'
             
             # Ajustar fonte para casos especiais (apenas para dados, não headers)
