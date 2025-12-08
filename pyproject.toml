@@ -1,0 +1,15 @@
+[project]
+name = "projeto-livro-matricula"
+version = "0.1.0"
+description = "Gerador de Livro de Matrículas"
+requires-python = ">=3.12"
+dependencies = [
+    "streamlit",
+    "pandas",
+    "openpyxl",
+    "fpdf",
+    "xlrd>=2.0.1",
+]
+
+[tool.uv]
+dev-dependencies = []
