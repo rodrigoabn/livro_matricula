@@ -556,7 +556,7 @@ def gerar_pdf_matricula(df, dados_escola, titulo_documento):
                 row_values = [str(row[col]) for col in colunas_finais]
                 print_row(pdf, row_values, larguras_lista, is_header=False)
 
-    return bytes(pdf.output(dest='S'))
+    return pdf.output(dest='S').encode('latin-1')
 
 def gerar_capa(dados_escola):
     """Gera a capa do Livro de Matrículas em PDF"""
@@ -620,4 +620,4 @@ def gerar_capa(dados_escola):
     pdf.set_font('Arial', 'B', 26)
     pdf.cell(0, 15, titulo, 0, 1, 'C')
     
-    return bytes(pdf.output(dest='S'))
+    return pdf.output(dest='S').encode('latin-1')
