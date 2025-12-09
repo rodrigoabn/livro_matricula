@@ -738,7 +738,7 @@ def gerar_capa(dados_escola):
     textos_inst = [
         "Estado do Rio de Janeiro",
         "Prefeitura Municipal de Campos dos Goytacazes",
-        "Secretaria Municipal de Educação, Ciência e Tecnologia"
+        "Secretaria Municipal de Educação, Ciência e Tecnologia",
         "Diretoria de Supervisão Escolar"
     ]
     
