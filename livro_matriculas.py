@@ -49,7 +49,6 @@ def formatar_cep(cep):
 # Header
 st.title("Gerador de Livro de Matrículas")
 st.markdown("Converta sua planilha gerada no Suap no Livro de Matŕiculas!")
-st.markdown("COLOCAR LINK DO YOUTUBE SOBRE COMO USAR A FERRAMENTA")
 st.write("---")
 
 # Painel de Dados (Sem st.form para permitir reatividade imediata)
@@ -188,41 +187,6 @@ def validar_dados():
     if not email: erros.append("E-mail é obrigatório")
     if not telefone_input: erros.append("Telefone é obrigatório")
     return erros
-
-def processar_arquivo(df, titulo_sucesso):
-    st.subheader("Pré-visualização (10 primeiras linhas)")
-    st.dataframe(df.head(10))
-    
-    st.write("---")
-    
-    # Botão de Ação
-    # Usando chave única para o botão baseado no título para evitar conflito de IDs
-    if st.button(f"Criar {titulo_sucesso}", key=titulo_sucesso):
-        # Validações antes de gerar
-        erros_validacao = validar_dados()
-        
-        if erros_validacao:
-            for e in erros_validacao:
-                st.error(e)
-        else:
-            st.success(f"{titulo_sucesso} gerado com sucesso!")
-            
-            col_down1, col_down2 = st.columns(2)
-            with col_down1:
-                st.download_button(
-                    label=f"Baixar PDF ({titulo_sucesso})",
-                    data=b"PDF Placeholder",
-                    file_name=f"livro_{titulo_sucesso.lower().replace(' ', '_')}.pdf",
-                    key=f"pdf_{titulo_sucesso}"
-                )
-            with col_down2:
-                st.download_button(
-                    label="Baixar Excel",
-                    data=b"Excel Placeholder",
-                    file_name=f"dados_{titulo_sucesso.lower().replace(' ', '_')}.xlsx",
-                    key=f"xls_{titulo_sucesso}"
-                )
-
 
 # Processamento de Dados
 @st.cache_data
@@ -363,7 +327,7 @@ def tratar_dados(df, ano_letivo_ref, data_censo_ref):
 
     return df
 
-from pdf_generator import gerar_pdf_matricula, gerar_capa
+from pdf_generator import gerar_pdf_matricula, gerar_capa, gerar_termo_abertura, gerar_termo_encerramento
 
 # Validação Reutilizável
 def validar_dados(dados):
@@ -431,11 +395,23 @@ def renderizar_ui_processamento(df, titulo_sucesso, dados_escola):
                     key=f"dl_pdf_{key_prefix}"
                 )
             with col_down2:
+                termo_bytes = gerar_termo_abertura(dados_escola)
                 st.download_button(
-                    label="Baixar dados para Excel",
-                    data=b"Excel Placeholder", # Excel logic can be added later simular way
-                    file_name=f"dados_{key_prefix.lower().replace(' ', '_')}.xlsx",
-                    key=f"dl_xls_{key_prefix}"
+                    label="Baixar Termo de Abertura",
+                    data=termo_bytes,
+                    file_name=f"Termo de Abertura {dados_escola.get('ano_letivo', '')}.pdf",
+                    mime="application/pdf",
+                    key=f"dl_termo_{key_prefix}"
+                )
+                
+                st.write("") # Espaçamento
+                termo_enc_bytes = gerar_termo_encerramento(dados_escola)
+                st.download_button(
+                    label="Baixar Termo de Encerramento",
+                    data=termo_enc_bytes,
+                    file_name=f"Termo de Encerramento {dados_escola.get('ano_letivo', '')}.pdf",
+                    mime="application/pdf",
+                    key=f"dl_termo_enc_{key_prefix}"
                 )
             
             # Botão de Capa (Apenas se NÃO for EJA 2º SEM)
