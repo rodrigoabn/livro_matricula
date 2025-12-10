@@ -73,8 +73,7 @@ class PDF(FPDF):
         texto_inst = [
             "Estado do Rio de Janeiro",
             "Prefeitura Municipal de Campos dos Goytacazes",
-            "Secretaria Municipal de Educação, Ciência e Tecnologia",
-            "Diretoria de Supervisão Escolar"
+            "Secretaria Municipal de Educação, Ciência e Tecnologia"
         ]
         cur_x2 = x_start + w_col1 + 2
         cur_y2 = y_start + 2  # Padding aqui é 2
@@ -745,8 +744,7 @@ def gerar_capa(dados_escola):
     textos_inst = [
         "Estado do Rio de Janeiro",
         "Prefeitura Municipal de Campos dos Goytacazes",
-        "Secretaria Municipal de Educação, Ciência e Tecnologia",
-        "Diretoria de Supervisão Escolar"
+        "Secretaria Municipal de Educação, Ciência e Tecnologia"
     ]
     
     for txt in textos_inst:
@@ -845,8 +843,7 @@ def gerar_termo_abertura(dados_escola):
     texto_inst = [
         "Estado do Rio de Janeiro",
         "Prefeitura Municipal de Campos dos Goytacazes",
-        "Secretaria Municipal de Educação, Ciência e Tecnologia",
-        "Diretoria de Supervisão Escolar"
+        "Secretaria Municipal de Educação, Ciência e Tecnologia"
     ]
     cur_x2 = x_start + w_col1 + 2
     cur_y2 = y_start + 2
@@ -1034,8 +1031,7 @@ def gerar_termo_encerramento(dados_escola):
     texto_inst = [
         "Estado do Rio de Janeiro",
         "Prefeitura Municipal de Campos dos Goytacazes",
-        "Secretaria Municipal de Educação, Ciência e Tecnologia",
-        "Diretoria de Supervisão Escolar"
+        "Secretaria Municipal de Educação, Ciência e Tecnologia"
     ]
     cur_x2 = x_start + w_col1 + 2
     cur_y2 = y_start + 2
