@@ -379,9 +379,9 @@ def processar_arquivo_action(df, key_prefix, dados_escola):
 def renderizar_ui_processamento(df, titulo_sucesso, dados_escola):
     key_prefix = titulo_sucesso  # Usando título como chave única
     
-    st.subheader("Pré-visualização (10 primeiras linhas)")
-    st.dataframe(df.head(10))
-    st.write("---")
+    #st.subheader("Pré-visualização (10 primeiras linhas)")
+    #st.dataframe(df.head(10))
+    #st.write("---")
     
     # Botão de Ação (Callback)
     st.button(
