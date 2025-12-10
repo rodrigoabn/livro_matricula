@@ -17,7 +17,7 @@ class PDF(FPDF):
         self.titulo_doc = titulo_doc
         self.dados_escola = dados_escola
         # Margens: Left, Top, Right
-        self.set_margins(10, 30, 10)  # margem superior 3cm
+        self.set_margins(10, 5, 10)  # margem mínima superior
         self.set_auto_page_break(auto=True, margin=10)
         self.current_header_info = {} # Dicionário para informações dinâmicas do cabeçalho por grupo
 
@@ -38,7 +38,7 @@ class PDF(FPDF):
         tel = fix_text(self.dados_escola.get('telefone', ''))
         email = fix_text(self.dados_escola.get('email', ''))
 
-        self.set_y(20)  # Margem superior 20mm
+        self.set_y(5)  # Margem superior reduzida para 5mm
         self.set_x(margin_left)
         
         # Definir posições iniciais para uso posterior
@@ -73,8 +73,7 @@ class PDF(FPDF):
         texto_inst = [
             "Estado do Rio de Janeiro",
             "Prefeitura Municipal de Campos dos Goytacazes",
-            "Secretaria Municipal de Educação, Ciência e Tecnologia",
-            "Diretoria de Supervisão Escolar"
+            "Secretaria Municipal de Educação, Ciência e Tecnologia"
         ]
         cur_x2 = x_start + w_col1 + 2
         cur_y2 = y_start + 2  # Padding aqui é 2
@@ -241,7 +240,7 @@ class PDF(FPDF):
         
         # Texto "Supervisor Pedagogo"
         self.set_xy(x_start2, y_line + 1)
-        self.cell(col_width, 3, 'Pedagogo Supervisor', 0, 0, 'C')
+        self.cell(col_width, 3, 'Supervisor Pedagogo', 0, 0, 'C')
         
 
 def gerar_pdf_matricula(df, dados_escola, titulo_documento):
@@ -277,7 +276,7 @@ def gerar_pdf_matricula(df, dados_escola, titulo_documento):
         'Nome do Pai': 'Filiação 2',
         'Naturalidade': 'Naturalidade',
         'Nacionalidade': 'Nacionalidade',
-        'Etnia/Raça': 'Cor/Raça',
+        'Data de Matrícula': 'Data Matrícula Suap',
         'Deficiência, TEA, Altas Habilidades ou Superdotação': 'PNE',
         'Pós Censo': 'Pós Censo',
         'Situação no Ano Selecionado': 'Situação',
@@ -290,10 +289,6 @@ def gerar_pdf_matricula(df, dados_escola, titulo_documento):
     colunas_finais = list(mapa_colunas.values())
     
     # Renomear/Criar
-    # Se 'Etnia/Raça' não existir no DF, criar vazia para evitar erro de Key
-    if 'Etnia/Raça' not in df_relatorio.columns:
-         df_relatorio['Etnia/Raça'] = ""
-         
     df_relatorio.rename(columns=mapa_colunas, inplace=True)
     
     # Garantir Inteiros na coluna '#'
@@ -340,7 +335,7 @@ def gerar_pdf_matricula(df, dados_escola, titulo_documento):
         'Filiação 2': 30,
         'Naturalidade': 18,
         'Nacionalidade': 18,
-        'Cor/Raça': 12,
+        'Data Matrícula Suap': 15,
         'PNE': 8,
         'Pós Censo': 10, 
         'Situação': 18,
@@ -358,7 +353,7 @@ def gerar_pdf_matricula(df, dados_escola, titulo_documento):
         'Idade (31/03)': 'Idade\n (31/03)',
         'Data da situação': 'Data da\n Situação',
         'Data de Nascimento': 'Data de\n Nascimento',
-        'Cor/Raça': 'Cor/\nRaça',
+        'Data Matrícula Suap': 'Data \nMatrícula Suap',
         'Filiação 1': 'Filiação 1',
         'Filiação 1': 'Filiação 1',
         'Filiação 2': 'Filiação 2',
@@ -616,13 +611,10 @@ def gerar_pdf_matricula(df, dados_escola, titulo_documento):
         # Preparar DF do Grupo
         
         # --- Lógica de Deduplicação por CPF (Manter mais antiga) ---
-        # Ajuste: A coluna 'Data Matrícula Suap' foi removida da exibição/mapeamento, 
-        # então usamos a coluna original 'Data de Matrícula' que deve estar no DF.
-        col_data_sort = 'Data de Matrícula'
-        if 'CPF' in df_grupo.columns and col_data_sort in df_grupo.columns:
+        if 'CPF' in df_grupo.columns and 'Data Matrícula Suap' in df_grupo.columns: # Renomeada de Data de Matrícula
              try:
                  # Criar coluna temporária de data para ordenação
-                 df_grupo['__data_sort'] = pd.to_datetime(df_grupo[col_data_sort], dayfirst=True, errors='coerce')
+                 df_grupo['__data_sort'] = pd.to_datetime(df_grupo['Data Matrícula Suap'], dayfirst=True, errors='coerce')
                  # Ordenar por data (Ascendente = Mais Antiga Primeiro)
                  df_grupo.sort_values(by='__data_sort', ascending=True, inplace=True)
                  # Remover duplicatas de CPF, mantendo a primeira (mais antiga)
@@ -673,7 +665,7 @@ def gerar_pdf_matricula(df, dados_escola, titulo_documento):
         df_sub = df_grupo[colunas_finais]
         
         # 4. Paginação do Grupo
-        registros_por_pagina = 15
+        registros_por_pagina = 17
         total_registros = len(df_sub)
         
         for i in range(0, total_registros, registros_por_pagina):
@@ -697,40 +689,28 @@ def gerar_pdf_matricula(df, dados_escola, titulo_documento):
 
 def gerar_capa(dados_escola):
     """Gera a capa do Livro de Matrículas em PDF"""
-    pdf = FPDF(orientation='P', unit='mm', format='A4')
+    pdf = FPDF(orientation='L', unit='mm', format='A4')
     pdf.set_auto_page_break(auto=False)
     pdf.add_page()
     
     # Configurações da Página
-    page_width = 210
-    page_height = 297
-    margin_top = 10
-    margin_left = 20
-    margin_right = 10
-    margin_bottom = 10
-    
-    # Configurar margens
-    pdf.set_margins(margin_left, margin_top, margin_right)
+    page_width = 297
+    page_height = 210
+    margin = 10
     
     # 1. Borda de 2 pontos (aprox 0.7mm)
     pdf.set_line_width(0.7)
-    pdf.rect(margin_left, margin_top, page_width - margin_left - margin_right, page_height - margin_top - margin_bottom)
+    pdf.rect(margin, margin, page_width - 2*margin, page_height - 2*margin)
     
     # Centralização e Alinhamento ao Alto
-    y_cursor = margin_top + 15 # Espaço inicial após a borda
+    y_cursor = margin + 15 # Espaço inicial após a borda
     
     # 2. Imagem Brasão
     # Centralizar imagem. Tamanho sugerido: 30x30mm
     logo_w = 30
     logo_h = 30
     try:
-        # Centralizar na área útil (respeitando margens)
-        # x_img = pdf.l_margin + (pdf.epw - logo_w) / 2
-        # Ou manter centralizado na PÁGINA se for preferência? O texto usa cell(0) que respeita margens.
-        # Vamos centralizar na PÁGINA para ficar simétrico visualmente no papel ou na área útil? 
-        # Geralmente capa se centraliza no papel, mas com margem esquerda maior (encadernação), o centro visual muda.
-        # Vou centralizar na área útil para alinhar com o texto.
-        x_img = margin_left + (page_width - margin_left - margin_right - logo_w) / 2
+        x_img = (page_width - logo_w) / 2
         pdf.image('brasao.png', x=x_img, y=y_cursor, w=logo_w, h=logo_h)
         y_cursor += logo_h + 5
     except:
@@ -745,14 +725,13 @@ def gerar_capa(dados_escola):
     textos_inst = [
         "Estado do Rio de Janeiro",
         "Prefeitura Municipal de Campos dos Goytacazes",
-        "Secretaria Municipal de Educação, Ciência e Tecnologia",
-        "Diretoria de Supervisão Escolar"
+        "Secretaria Municipal de Educação, Ciência e Tecnologia"
     ]
     
     for txt in textos_inst:
         pdf.cell(0, 8, txt, 0, 1, 'C')
         
-    y_cursor = pdf.get_y() + 20
+    y_cursor = pdf.get_y() + 15
     
     # 4. Nome da Unidade
     nome_escola = fix_text(dados_escola.get('nome', 'Nome da Escola Não Informado'))
@@ -784,13 +763,11 @@ def gerar_termo_abertura(dados_escola):
     # Configurações da Página
     page_width = 210
     page_height = 297
-    margin = 20 # Margem padrão A4 (Ref)
+    margin = 20 # Margem padrão A4
     
     # 1. Header (Adaptado da classe PDF para Portrait)
     # Configurar larguras e posições
-    margin_left = 20 # Margem ajustada para encadernação (20mm)
-    pdf.set_margins(margin_left, 10, 10) # Margem esquerda 20, direita 10
-    
+    margin_left = 10 # Margem ajustada para Terno (era 5 no PDF class) - vou usar 10 para ficar balanceado com 20mm geral
     # Ajustando para usar margem real da pagina definida no add_page que é default 1cm se nao setado? 
     # FPDF default margin is 10mm.
     # Mas no PDF class era set_margins(10,5,10).
@@ -831,38 +808,30 @@ def gerar_termo_abertura(dados_escola):
     h_row1 = 20
     logo_size = 12.8
     try:
-         # Alinhar logo à esquerda (x_start) para ficar igual à linha 2
-         pdf.image('brasao.png', x_start, y_start + 2, logo_size, logo_size)
+         pdf.image('brasao.png', x_start + (w_col1 - logo_size)/2, y_start + 2, logo_size, logo_size)
     except:
          pass
          
-    # 2. Institucional (Ocupando o resto da linha 1)
-    # w_col2 agora ocupa todo o espaço restante pois a escola desceu
-    w_col2 = usable_width - w_col1
-    
+    # 2. Institucional
     pdf.set_xy(x_start + w_col1, y_start)
-    pdf.set_font('Arial', '', 9)
+    pdf.set_font('Arial', '', 7)
     texto_inst = [
         "Estado do Rio de Janeiro",
         "Prefeitura Municipal de Campos dos Goytacazes",
-        "Secretaria Municipal de Educação, Ciência e Tecnologia",
-        "Diretoria de Supervisão Escolar"
+        "Secretaria Municipal de Educação, Ciência e Tecnologia"
     ]
     cur_x2 = x_start + w_col1 + 2
     cur_y2 = y_start + 2
     line_h2 = 4
     for linha in texto_inst:
         pdf.set_xy(cur_x2, cur_y2)
-        pdf.cell(w_col2 - 4, line_h2, linha, 0, 0, 'L')
+        pdf.cell(w_col2, line_h2, linha, 0, 0, 'L')
         cur_y2 += line_h2
         
-    # Calcular altura da linha 1 para posicionar a linha 2
-    y_end_row1 = max(y_start + h_row1, cur_y2 + 2)
-    
-    # 3. Dados Escola (Nova Linha 2)
-    pdf.set_y(y_end_row1)
-    pdf.set_x(margin_left)
-    cur_y3 = pdf.get_y()
+    # 3. Dados Escola
+    cur_x3 = x_start + w_col1 + w_col2
+    cur_y3 = y_start + 2
+    line_h3 = 4
     
     # Formatar telefone
     tel_nums = "".join(filter(str.isdigit, str(tel)))
@@ -878,28 +847,20 @@ def gerar_termo_abertura(dados_escola):
     linha3 = f"Contatos: {tel_fmt} | {email}"
     linha4 = f"Código do INEP: {inep}"
     
-    # Configurar Fonte 8 e Alinhamento Esquerda
-    pdf.set_font('Arial', '', 8)
-    line_h3 = 4
+    # Linha 1: Negrito 9 (Reduzido de 10 para caber melhor)
+    pdf.set_font('Arial', 'B', 10)
+    pdf.set_xy(cur_x3, cur_y3)
+    pdf.cell(w_col3, line_h3, linha1, 0, 0, 'R')
+    cur_y3 += line_h3
     
-    # Imprimir linhas
-    # Linha 1 (Nome) - Negrito opcional? O user não pediu negrito especificamente na instrução de "nova linha", 
-    # mas antes era. Vou manter regular conforme pedido "linha 2 com fonte 8" (implica estilo base).
-    # Se quiser Negrito no nome: pdf.set_font('Arial', 'B', 8)
-    # Vou usar BOLD para o nome para destaque, e regular para o resto, ou tudo regular?
-    # Pedido: "linha 2 com fonte 8". Vou por tudo regular para seguir estritamente, ou manter B para nome?
-    # O user disse "conter os mesmos dados". 
-    # Vou colocar Nome em Negrito 8 e o resto Regular 8 para ficar bonito.
-    
-    pdf.set_font('Arial', 'B', 8)
-    pdf.cell(usable_width, line_h3, linha1, 0, 1, 'L')
-    
-    pdf.set_font('Arial', '', 8)
-    pdf.cell(usable_width, line_h3, linha2, 0, 1, 'L')
-    pdf.cell(usable_width, line_h3, linha3, 0, 1, 'L')
-    pdf.cell(usable_width, line_h3, linha4, 0, 1, 'L')
-    
-    cur_y3 = pdf.get_y()
+    # Demais: Regular 6
+    pdf.set_font('Arial', '', 7)
+    for txt in [linha2, linha3, linha4]:
+        pdf.set_xy(cur_x3, cur_y3)
+        # MultiCell para garantir quebra se endereço for longo
+        pdf.multi_cell(w_col3, line_h3, txt, 0, 'R')
+        # Atualizar Y para a próxima linha
+        cur_y3 = pdf.get_y()
     
     y_header = max(cur_y2, cur_y3) + 1
     pdf.line(margin_left, y_header, margin_left + usable_width, y_header)
@@ -924,191 +885,14 @@ def gerar_termo_abertura(dados_escola):
     
     texto_corpo = (
         f"Este livro contém ___________ folhas rubricadas por mim ___________________________________________, "
-        f"matrícula _________________, servirá para registro de matrículas dos alunos da unidade escolar "
+        f"matrícula _________________, servirá para registro de matrículas dos alunos da Unidade Escolar"
         f"{nome}, localizada no município de Campos dos Goytacazes (RJ)."
     )
     
     pdf.set_font('Arial', '', 12)
     pdf.multi_cell(0, 8, fix_text(texto_corpo), 0, 'J')
     
-    pdf.ln(15)
-    
-    # Data Local
-    txt_data = "Campos dos Goytacazes , ________ de ____________________ de _________."
-    pdf.cell(0, 8, fix_text(txt_data), 0, 1, 'R')
-    
-    pdf.ln(30) # 3cm de espaçamento para as assinaturas
-    
-    # --- 4. Assinaturas ---
-    # Coluna Width precisa ser re-calculada ou usar usable_width
-    col_width = usable_width / 2
-
-    y_sig = pdf.get_y()
-    
-    # Assinatura 1 (Esquerda) - Direção
-    x_sig1 = margin_left
-    pdf.set_xy(x_sig1, y_sig)
-    
-    # Desenhar linhas manualmente
-    line_w = 60
-    # Centro da coluna 1
-    center_c1 = margin_left + (col_width / 2)
-    pdf.line(center_c1 - line_w/2, y_sig, center_c1 + line_w/2, y_sig)
-    
-    pdf.set_xy(x_sig1, y_sig + 2)
-    pdf.cell(col_width, 5, fix_text("Direção"), 0, 0, 'C')
-    
-    # Assinatura 2 (Direita) - Supervisor
-    # Centro da coluna 2
-    x_sig2 = margin_left + col_width
-    center_c2 = x_sig2 + (col_width / 2)
-    pdf.line(center_c2 - line_w/2, y_sig, center_c2 + line_w/2, y_sig)
-    
-    pdf.set_xy(x_sig1, y_sig + 2)
-    pdf.cell(col_width, 5, fix_text("Direção"), 0, 0, 'C')
-    
-    # Assinatura 2 (Direita) - Supervisor
-    # Centro da coluna 2
-    x_sig2 = margin_left + col_width
-    center_c2 = x_sig2 + (col_width / 2)
-    pdf.line(center_c2 - line_w/2, y_sig, center_c2 + line_w/2, y_sig)
-    
-    pdf.set_xy(x_sig2, y_sig + 2)
-    pdf.cell(col_width, 5, fix_text("Pedagogo Supervisor"), 0, 0, 'C')
-    
-    val = pdf.output(dest='S')
-    if isinstance(val, str):
-        return val.encode('latin-1')
-    return bytes(val)
-
-def gerar_termo_encerramento(dados_escola):
-    """Gera o Termo de Encerramento em PDF"""
-    pdf = FPDF(orientation='P', unit='mm', format='A4')
-    pdf.set_auto_page_break(auto=False)
-    pdf.add_page()
-    
-    # Configurações da Página
-    page_width = 210
-    page_height = 297
-    margin_left = 20 # Margem ajustada para encadernação (20mm)
-    pdf.set_margins(margin_left, 10, 10) 
-    
-    # Page width A4 Portrait
-    page_width_p = 210
-    usable_width = page_width_p - 2 * margin_left
-    
-    # Dados Escola
-    nome = fix_text(dados_escola.get('nome', ''))
-    inep = fix_text(dados_escola.get('inep', ''))
-    ano = fix_text(dados_escola.get('ano_letivo', ''))
-    end = fix_text(dados_escola.get('logradouro', ''))
-    num = fix_text(dados_escola.get('numero', ''))
-    bairro = fix_text(dados_escola.get('bairro', ''))
-    cep = fix_text(dados_escola.get('cep', ''))
-    tel = fix_text(dados_escola.get('telefone', ''))
-    email = fix_text(dados_escola.get('email', ''))
-
-    pdf.set_y(5)  # Margem superior
-    pdf.set_x(margin_left)
-    
-    x_start = pdf.get_x()
-    y_start = pdf.get_y()
-    
-    # --- Layout Colunas ---
-    w_col1 = 25
-    
-    # 1. Logo
-    h_row1 = 20
-    logo_size = 12.8
-    try:
-         # Alinhar logo à esquerda (x_start)
-         pdf.image('brasao.png', x_start, y_start + 2, logo_size, logo_size)
-    except:
-         pass
-         
-    # 2. Institucional (Ocupando o resto da linha 1)
-    w_col2 = usable_width - w_col1
-    
-    pdf.set_xy(x_start + w_col1, y_start)
-    pdf.set_font('Arial', '', 9)
-    texto_inst = [
-        "Estado do Rio de Janeiro",
-        "Prefeitura Municipal de Campos dos Goytacazes",
-        "Secretaria Municipal de Educação, Ciência e Tecnologia",
-        "Diretoria de Supervisão Escolar"
-    ]
-    cur_x2 = x_start + w_col1 + 2
-    cur_y2 = y_start + 2
-    line_h2 = 4
-    for linha in texto_inst:
-        pdf.set_xy(cur_x2, cur_y2)
-        pdf.cell(w_col2 - 4, line_h2, linha, 0, 0, 'L')
-        cur_y2 += line_h2
-        
-    # Calcular altura da linha 1 para posicionar a linha 2
-    y_end_row1 = max(y_start + h_row1, cur_y2 + 2)
-    
-    # 3. Dados Escola (Nova Linha 2)
-    pdf.set_y(y_end_row1)
-    pdf.set_x(margin_left)
-    cur_y3 = pdf.get_y()
-    
-    # Formatar telefone
-    tel_nums = "".join(filter(str.isdigit, str(tel)))
-    if len(tel_nums) == 11:
-        tel_fmt = f"({tel_nums[:2]}) {tel_nums[2:7]}-{tel_nums[7:]}"
-    elif len(tel_nums) == 10:
-        tel_fmt = f"({tel_nums[:2]}) {tel_nums[2:6]}-{tel_nums[6:]}"
-    else:
-        tel_fmt = tel
-        
-    linha1 = f"{nome}"
-    linha2 = f"Endereço: {end} , {num}. {bairro}. CEP: {cep}"
-    linha3 = f"Contatos: {tel_fmt} | {email}"
-    linha4 = f"Código do INEP: {inep}"
-    
-    # Configurar Fonte 8 e Alinhamento Esquerda
-    pdf.set_font('Arial', '', 8)
-    line_h3 = 4
-    
-    # Imprimir linhas
-    pdf.set_font('Arial', 'B', 8)
-    pdf.cell(usable_width, line_h3, linha1, 0, 1, 'L')
-    
-    pdf.set_font('Arial', '', 8)
-    pdf.cell(usable_width, line_h3, linha2, 0, 1, 'L')
-    pdf.cell(usable_width, line_h3, linha3, 0, 1, 'L')
-    pdf.cell(usable_width, line_h3, linha4, 0, 1, 'L')
-    
-    cur_y3 = pdf.get_y()
-    
-    y_header = max(cur_y2, cur_y3) + 1
-    pdf.line(margin_left, y_header, margin_left + usable_width, y_header)
-    
-    # Reset Y para baixo do cabeçalho
-    pdf.set_y(y_start + h_row1 + 50)
-    
-    # --- 2. Título ---
-    pdf.set_font('Arial', 'B', 16)
-    pdf.cell(0, 10, "TERMO DE ENCERRAMENTO DO LIVRO DE MATRÍCULAS", 0, 1, 'C')
-    pdf.ln(10)
-    
-    # --- 3. Texto do Termo ---
-    texto_corpo = (
-        f"Ficam encerradas na unidade escolar {nome}, para fins estatísticos as matrículas efetuadas "
-        f"no ano de {ano} com um total de _______ alunos."
-    )
-    
-    pdf.set_font('Arial', '', 12)
-    pdf.multi_cell(0, 8, fix_text(texto_corpo), 0, 'J')
-    
-    pdf.ln(15)
-    
-    # Data Local
-    txt_data = "Campos dos Goytacazes , ________ de ____________________ de _________."
-    pdf.cell(0, 8, fix_text(txt_data), 0, 1, 'R')
-    
-    pdf.ln(30) # 3cm de espaçamento para as assinaturas
+    pdf.ln(40)
     
     # --- 4. Assinaturas ---
     # Coluna Width precisa ser re-calculada ou usar usable_width
@@ -1136,7 +920,7 @@ def gerar_termo_encerramento(dados_escola):
     pdf.line(center_c2 - line_w/2, y_sig, center_c2 + line_w/2, y_sig)
     
     pdf.set_xy(x_sig2, y_sig + 2)
-    pdf.cell(col_width, 5, fix_text("Pedagogo Supervisor"), 0, 0, 'C')
+    pdf.cell(col_width, 5, fix_text("Supervisor Pedagogo"), 0, 0, 'C')
     
     val = pdf.output(dest='S')
     if isinstance(val, str):

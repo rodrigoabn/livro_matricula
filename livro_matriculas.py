@@ -289,6 +289,22 @@ def tratar_dados(df, ano_letivo_ref, data_censo_ref):
 
     # Aplica linha a linha
     df['Deficiência, TEA, Altas Habilidades ou Superdotação'] = df.apply(consolidar_necessidades, axis=1)
+
+    # Nova Lógica Condicional para 'Situação no Ano Selecionado' (Educação Infantil)
+    # Se "Descrição do Curso" == "Educação Infantil" AND "Situação no Ano Selecionado" == "Aprovado" -> "Sem Movimentação"
+    # Se "Descrição do Curso" == "Educação Infantil" AND "Situação no Ano Selecionado" == "Reprovado" -> "Ajuste de Idade"
+    
+    if 'Descrição do Curso' in df.columns and 'Situação no Ano Selecionado' in df.columns:
+        # Normalizar strings para comparação segura
+        df['Descrição do Curso'] = df['Descrição do Curso'].astype(str).str.strip()
+        df['Situação no Ano Selecionado'] = df['Situação no Ano Selecionado'].astype(str).str.strip()
+        
+        mask_infantil = df['Descrição do Curso'] == 'Educação Infantil'
+        mask_aprovado = df['Situação no Ano Selecionado'] == 'Aprovado'
+        mask_reprovado = df['Situação no Ano Selecionado'] == 'Reprovado'
+        
+        df.loc[mask_infantil & mask_aprovado, 'Situação no Ano Selecionado'] = 'Sem Movimentação'
+        df.loc[mask_infantil & mask_reprovado, 'Situação no Ano Selecionado'] = 'Ajuste de Idade'
     
     # 6. Lógica Condicional para 'Data da Situação'
     # Mostrar data apenas se Situação for "Transferido" ou "Transf. Externa"
@@ -369,7 +385,7 @@ def renderizar_ui_processamento(df, titulo_sucesso, dados_escola):
     
     # Botão de Ação (Callback)
     st.button(
-        f"Criar {titulo_sucesso}",
+        f"Criar Documentos",
         key=f"btn_criar_{key_prefix}",
         on_click=processar_arquivo_action,
         args=(df, key_prefix, dados_escola)
@@ -381,49 +397,48 @@ def renderizar_ui_processamento(df, titulo_sucesso, dados_escola):
             st.error(e)
             
     if f'sucesso_{key_prefix}' in st.session_state and st.session_state[f'sucesso_{key_prefix}']:
-        st.success(f"{titulo_sucesso} gerado com sucesso!")
+        st.success(f"Arquivos gerados com sucesso!")
         
-        # Área de Download Persistente
+        # Área de Download Persistente (empilhada verticalmente)
         if f'pdf_bytes_{key_prefix}' in st.session_state:
-            col_down1, col_down2 = st.columns(2)
-            with col_down1:
-                st.download_button(
-                    label=f"Baixar {titulo_sucesso} em PDF",
-                    data=st.session_state[f'pdf_bytes_{key_prefix}'],
-                    file_name=st.session_state[f'pdf_name_{key_prefix}'],
-                    mime="application/pdf",
-                    key=f"dl_pdf_{key_prefix}"
-                )
-            with col_down2:
-                termo_bytes = gerar_termo_abertura(dados_escola)
-                st.download_button(
-                    label="Baixar Termo de Abertura",
-                    data=termo_bytes,
-                    file_name=f"Termo de Abertura {dados_escola.get('ano_letivo', '')}.pdf",
-                    mime="application/pdf",
-                    key=f"dl_termo_{key_prefix}"
-                )
-                
-                st.write("") # Espaçamento
-                termo_enc_bytes = gerar_termo_encerramento(dados_escola)
-                st.download_button(
-                    label="Baixar Termo de Encerramento",
-                    data=termo_enc_bytes,
-                    file_name=f"Termo de Encerramento {dados_escola.get('ano_letivo', '')}.pdf",
-                    mime="application/pdf",
-                    key=f"dl_termo_enc_{key_prefix}"
-                )
-            
-            # Botão de Capa (Apenas se NÃO for EJA 2º SEM)
+            # Botão PDF
+            st.download_button(
+                label=f"Baixar {titulo_sucesso} em PDF",
+                data=st.session_state[f'pdf_bytes_{key_prefix}'],
+                file_name=st.session_state[f'pdf_name_{key_prefix}'],
+                mime="application/pdf",
+                key=f"dl_pdf_{key_prefix}"
+            )
+            st.write("\n")  # Espaçamento
+            # Termo de Abertura
+            termo_bytes = gerar_termo_abertura(dados_escola)
+            st.download_button(
+                label="Baixar Termo de Abertura",
+                data=termo_bytes,
+                file_name=f"Termo de Abertura {dados_escola.get('ano_letivo', '')}.pdf",
+                mime="application/pdf",
+                key=f"dl_termo_{key_prefix}"
+            )
+            st.write("\n")
+            # Termo de Encerramento
+            termo_enc_bytes = gerar_termo_encerramento(dados_escola)
+            st.download_button(
+                label="Baixar Termo de Encerramento",
+                data=termo_enc_bytes,
+                file_name=f"Termo de Encerramento {dados_escola.get('ano_letivo', '')}.pdf",
+                mime="application/pdf",
+                key=f"dl_termo_enc_{key_prefix}"
+            )
+            st.write("\n")
+            # Capa (apenas se não for EJA 2º SEM)
             if "EJA 2º SEM" not in key_prefix:
-                st.write("") # Espaçamento
                 capa_bytes = gerar_capa(dados_escola)
                 st.download_button(
-                     label="Baixar Capa do Livro de Matrículas",
-                     data=capa_bytes,
-                     file_name=f"capa_livro_{dados_escola.get('ano_letivo', 'ano')}.pdf",
-                     mime="application/pdf",
-                     key=f"dl_capa_{key_prefix}"
+                    label="Baixar Capa do Livro de Matrículas",
+                    data=capa_bytes,
+                    file_name=f"capa_livro_{dados_escola.get('ano_letivo', 'ano')}.pdf",
+                    mime="application/pdf",
+                    key=f"dl_capa_{key_prefix}"
                 )
 
 col_imp1, col_imp2 = st.columns(2)
