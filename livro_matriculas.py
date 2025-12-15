@@ -141,6 +141,7 @@ with st.container():
             st.caption(f"Formato: {formatar_telefone(telefone_input)}")
 
     st.write("") # Espaçamento
+    st.write("---")
 
     # Dias Letivos (Alterado)
     col7, col8 = st.columns(2)
@@ -149,6 +150,8 @@ with st.container():
         # Range 200 a 210
         total_dias_letivos = st.number_input("Total de Dias Letivos", min_value=200, max_value=210, value=200, step=1)
     with col8:
+        st.markdown("\n.")
+       
         data_encerramento = st.date_input("Data de Encerramento", format="DD/MM/YYYY")
 
     # Condicional EJA 1
@@ -415,29 +418,29 @@ def renderizar_ui_processamento(df, titulo_sucesso, dados_escola):
                 mime="application/pdf",
                 key=f"dl_pdf_{key_prefix}"
             )
-            st.write("\n")  # Espaçamento
-            # Termo de Abertura
-            termo_bytes = gerar_termo_abertura(dados_escola)
-            st.download_button(
-                label="Baixar Termo de Abertura",
-                data=termo_bytes,
-                file_name=f"Termo de Abertura {dados_escola.get('ano_letivo', '')}.pdf",
-                mime="application/pdf",
-                key=f"dl_termo_{key_prefix}"
-            )
-            st.write("\n")
-            # Termo de Encerramento
-            termo_enc_bytes = gerar_termo_encerramento(dados_escola)
-            st.download_button(
-                label="Baixar Termo de Encerramento",
-                data=termo_enc_bytes,
-                file_name=f"Termo de Encerramento {dados_escola.get('ano_letivo', '')}.pdf",
-                mime="application/pdf",
-                key=f"dl_termo_enc_{key_prefix}"
-            )
-            st.write("\n")
-            # Capa (apenas se não for EJA 2º SEM)
             if "EJA 2º SEM" not in key_prefix:
+                st.write("\n")  # Espaçamento
+                # Termo de Abertura
+                termo_bytes = gerar_termo_abertura(dados_escola)
+                st.download_button(
+                    label="Baixar Termo de Abertura",
+                    data=termo_bytes,
+                    file_name=f"Termo de Abertura {dados_escola.get('ano_letivo', '')}.pdf",
+                    mime="application/pdf",
+                    key=f"dl_termo_{key_prefix}"
+                )
+                st.write("\n")
+                # Termo de Encerramento
+                termo_enc_bytes = gerar_termo_encerramento(dados_escola)
+                st.download_button(
+                    label="Baixar Termo de Encerramento",
+                    data=termo_enc_bytes,
+                    file_name=f"Termo de Encerramento {dados_escola.get('ano_letivo', '')}.pdf",
+                    mime="application/pdf",
+                    key=f"dl_termo_enc_{key_prefix}"
+                )
+                st.write("\n")
+                # Capa
                 capa_bytes = gerar_capa(dados_escola)
                 st.download_button(
                     label="Baixar Capa do Livro de Matrículas",
