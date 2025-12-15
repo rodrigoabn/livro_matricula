@@ -305,6 +305,12 @@ def tratar_dados(df, ano_letivo_ref, data_censo_ref):
         
         df.loc[mask_infantil & mask_aprovado, 'Situação no Ano Selecionado'] = 'Sem Movimentação'
         df.loc[mask_infantil & mask_reprovado, 'Situação no Ano Selecionado'] = 'Ajuste de Idade'
+
+    # Substituição específica solicitada: "Aprovado com Progressão Parcial" -> "Aprovado com Prog. Parcial"
+    if 'Situação no Ano Selecionado' in df.columns:
+        df['Situação no Ano Selecionado'] = df['Situação no Ano Selecionado'].replace(
+            "Aprovado com Progressão Parcial", "Aprovado com Prog. Parcial"
+        )
     
     # 6. Lógica Condicional para 'Data da Situação'
     # Mostrar data apenas se Situação for "Transferido" ou "Transf. Externa"
@@ -488,7 +494,7 @@ with col_imp1:
 
 # COLUNA 2: Importar Arquivo EJA 2
 with col_imp2:
-    st.markdown("### Importar Arquivo EJA 2º Sem")
+    st.markdown("### Importar Arquivo EJA 2º Sem (EM DESENVOLVIMENTO)")
     st.info("Opção exclusiva para turmas de EJA do 2º Semestre.")
     
     uploaded_file2 = st.file_uploader("Upload EJA 2", type=["xlsx", "xls", "csv"], key="up2")
