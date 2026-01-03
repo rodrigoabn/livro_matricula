@@ -60,7 +60,7 @@ with st.container():
     # Ano Letivo e Data de Referência
     col1, col2 = st.columns(2)
     with col1:
-        ano_atual = datetime.now().year
+        ano_atual = 2025
         
         # Callback para atualizar a data do censo quando o ano mudar
         def atualizar_data_censo():
