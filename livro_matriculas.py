@@ -497,4 +497,4 @@ with col_imp1:
 
 # COLUNA 2: Importar Arquivo EJA 2
 with col_imp2:
-    st.markdown("##### Desculpe o transtorno! A EJA 2ºSEM será liberado em brece. Comunicaremos via e-mail institucional da Unidade Escolar.")
+    st.markdown("##### Desculpem-nos pelo transtorno! A EJA 2ºSEM será liberada em breve. Enviaremos uma comunicação por e-mail.")
