@@ -497,20 +497,4 @@ with col_imp1:
 
 # COLUNA 2: Importar Arquivo EJA 2
 with col_imp2:
-    st.markdown("### Importar Arquivo EJA 2º Sem (EM DESENVOLVIMENTO)")
-    st.info("Opção exclusiva para turmas de EJA do 2º Semestre.")
-    
-    uploaded_file2 = st.file_uploader("Upload EJA 2", type=["xlsx", "xls", "csv"], key="up2")
-    
-    if uploaded_file2 is not None:
-        try:
-            if uploaded_file2.name.endswith('.csv'):
-                df2 = pd.read_csv(uploaded_file2)
-            else:
-                df2 = pd.read_excel(uploaded_file2)
-            
-            df2 = tratar_dados(df2, ano_letivo, dados_escola['data_censo'])
-            renderizar_ui_processamento(df2, "Livro EJA 2º SEM", dados_escola)
-            
-        except Exception as e:
-            st.error(f"Erro ao processar arquivo 2: {e}")
+    st.markdown("##### Desculpe o transtorno! A EJA 2ºSEM será liberado em brece. Comunicaremos via e-mail institucional da Unidade Escolar.")
