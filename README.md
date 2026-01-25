@@ -1,6 +1,6 @@
 # Gerador de Livro de Matrículas
 
-Este projeto é uma ferramenta desenvolvida em Python com [Streamlit](https://streamlit.io/) para automatizar a criação do Livro de Matrículas escolar. A partir de dados exportados do SUAP (Sistema Unificado de Administração Pública), o sistema gera arquivos PDF formatados prontos para impressão e encadernação.
+Este projeto foi gerado com auxílio de IA na IDE Antigravity e é uma ferramenta desenvolvida em Python com [Streamlit](https://streamlit.io/) para automatizar a criação do Livro de Matrículas escolar. A partir de dados exportados do SUAP (Sistema Unificado de Administração Pública), o sistema gera arquivos PDF formatados prontos para impressão e encadernação.
 
 ## Funcionalidades
 
