@@ -250,6 +250,10 @@ def gerar_pdf_matricula(df, dados_escola, titulo_documento):
 
     # 1. Preparar Dados para o Relatório
     df_relatorio = df.copy()
+
+    # Ajuste: Se for EJA 2º Semestre, fixar "Pós Censo" como "-"
+    if "EJA 2º SEM" in titulo_documento:
+        df_relatorio['Pós Censo'] = "-"
     
     # Criar coluna de Ordem Sequencial com nome "#"
     # Garante que não duplica se já existir no arquivo original
@@ -622,9 +626,9 @@ def gerar_pdf_matricula(df, dados_escola, titulo_documento):
              try:
                  # Criar coluna temporária de data para ordenação
                  df_grupo['__data_sort'] = pd.to_datetime(df_grupo[col_data_sort], dayfirst=True, errors='coerce')
-                 # Ordenar por data (Ascendente = Mais Antiga Primeiro)
-                 df_grupo.sort_values(by='__data_sort', ascending=True, inplace=True)
-                 # Remover duplicatas de CPF, mantendo a primeira (mais antiga)
+                 # Ordenar por data (Descendente = Mais Nova Primeiro)
+                 df_grupo.sort_values(by='__data_sort', ascending=False, inplace=True)
+                 # Remover duplicatas de CPF, mantendo a primeira (mais nova)
                  # Filtra apenas CPFs não nulos/vazios para evitar exclusão acidental de vazios distintos
                  mask_cpf_valid = df_grupo['CPF'].notna() & (df_grupo['CPF'] != "")
                  
