@@ -2,6 +2,7 @@ from fpdf import FPDF
 from datetime import datetime
 import pandas as pd
 import math
+import unicodedata
 
 def fix_text(text):
     if text is None: return ""
@@ -660,7 +661,19 @@ def gerar_pdf_matricula(df, dados_escola, titulo_documento):
             cols_sort.append('Nome')
             
         if cols_sort:
-            df_grupo.sort_values(by=cols_sort, ascending=[True] * len(cols_sort), inplace=True)
+            def sort_normalizer(series):
+                if series.name == 'Nome':
+                    return series.astype(str).apply(
+                        lambda x: unicodedata.normalize('NFKD', x).encode('ASCII', 'ignore').decode('utf-8').upper() if pd.notnull(x) else ""
+                    )
+                return series
+                
+            df_grupo.sort_values(
+                by=cols_sort, 
+                ascending=[True] * len(cols_sort), 
+                inplace=True,
+                key=sort_normalizer
+            )
             
         # 1. Resetar Sequencial '#'
         if '#' in df_grupo.columns: df_grupo.drop(columns=['#'], inplace=True)

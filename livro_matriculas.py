@@ -143,34 +143,38 @@ with st.container():
     st.write("") # Espaçamento
     st.write("---")
 
+    # Limites para as datas de encerramento baseados no ano letivo
+    min_data_encerramento = date(int(ano_letivo), 1, 1)
+    max_data_encerramento = date(int(ano_letivo), 12, 31)
+
     # Dias Letivos (Alterado)
     col7, col8 = st.columns(2)
     with col7:
         st.markdown("**Turmas Regulares**")
         # Range 200 a 210
-        total_dias_letivos = st.number_input("Total de Dias Letivos", min_value=200, max_value=210, value=200, step=1)
+        total_dias_letivos = st.number_input("Total de Dias Letivos", min_value=200, max_value=210, value=None, step=1, placeholder="Insira a informação")
     with col8:
         st.markdown("\n.")
        
-        data_encerramento = st.date_input("Data de Encerramento", format="DD/MM/YYYY")
+        data_encerramento = st.date_input("Data de Encerramento", value=None, min_value=min_data_encerramento, max_value=max_data_encerramento, format="DD/MM/YYYY")
 
     # Condicional EJA 1
     if ofertou_eja_1:
         st.markdown("**EJA 1º Semestre**")
         col_eja1_1, col_eja1_2 = st.columns(2)
         with col_eja1_1:
-            dias_eja1 = st.number_input("Total de Dias Letivos - EJA 1º SEM", min_value=100, max_value=110, value=100, step=1)
+            dias_eja1 = st.number_input("Total de Dias Letivos - EJA 1º SEM", min_value=100, max_value=110, value=None, step=1, placeholder="Insira a informação")
         with col_eja1_2:
-            data_enc_eja1 = st.date_input("Data de Encerramento - EJA 1º SEM", format="DD/MM/YYYY", key="eja1_date")
+            data_enc_eja1 = st.date_input("Data de Encerramento - EJA 1º SEM", value=None, min_value=min_data_encerramento, max_value=max_data_encerramento, format="DD/MM/YYYY", key="eja1_date")
 
     # Condicional EJA 2
     if ofertou_eja_2:
         st.markdown("**EJA 2º Semestre**")
         col_eja2_1, col_eja2_2 = st.columns(2)
         with col_eja2_1:
-            dias_eja2 = st.number_input("Total de Dias Letivos - EJA 2º SEM", min_value=100, max_value=110, value=100, step=1)
+            dias_eja2 = st.number_input("Total de Dias Letivos - EJA 2º SEM", min_value=100, max_value=110, value=None, step=1, placeholder="Insira a informação")
         with col_eja2_2:
-            data_enc_eja2 = st.date_input("Data de Encerramento - EJA 2º SEM", format="DD/MM/YYYY", key="eja2_date")
+            data_enc_eja2 = st.date_input("Data de Encerramento - EJA 2º SEM", value=None, min_value=min_data_encerramento, max_value=max_data_encerramento, format="DD/MM/YYYY", key="eja2_date")
 
 st.write("---")
 
@@ -201,6 +205,18 @@ def carregar_depara():
         return None
 
 def tratar_dados(df, ano_letivo_ref, data_censo_ref):
+    # 0. Filtrar matrículas cujo ano inicia com valor superior ao ano letivo selecionado
+    if "Matrícula" in df.columns:
+        def filtro_ano_matricula(mat):
+            if pd.isnull(mat): return True
+            mat_str = str(mat).replace('.0', '').strip()
+            if len(mat_str) >= 4 and mat_str[:4].isdigit():
+                ano_mat = int(mat_str[:4])
+                if ano_mat > int(ano_letivo_ref):
+                    return False
+            return True
+        df = df[df["Matrícula"].apply(filtro_ano_matricula)].reset_index(drop=True)
+
     # 1. Converter datas para DD/MM/yyyy e criar temp para cálculos
     colunas_datas = ["Data de Matrícula", "Data do Último Procedimento"]
     
@@ -360,6 +376,24 @@ def validar_dados(dados):
     if not dados.get('nome'): erros.append("Nome da escola é obrigatório")
     if not dados.get('inep') or len(dados.get('inep', '')) != 8: erros.append("Confira o código do INEP")
     # if not dados.get('logradouro'): erros.append("Endereço (logradouro) é obrigatório") 
+    
+    if dados.get('total_dias_letivos') is None:
+        erros.append("Total de Dias Letivos (Regulares) é obrigatório")
+    if dados.get('data_encerramento') is None:
+        erros.append("Data de Encerramento (Regulares) é obrigatória")
+        
+    if dados.get('ofertou_eja_1'):
+        if dados.get('dias_eja1') is None:
+            erros.append("Total de Dias Letivos (EJA 1º SEM) é obrigatório")
+        if dados.get('data_enc_eja1') is None:
+            erros.append("Data de Encerramento (EJA 1º SEM) é obrigatória")
+            
+    if dados.get('ofertou_eja_2'):
+        if dados.get('dias_eja2') is None:
+            erros.append("Total de Dias Letivos (EJA 2º SEM) é obrigatório")
+        if dados.get('data_enc_eja2') is None:
+            erros.append("Data de Encerramento (EJA 2º SEM) é obrigatória")
+            
     return erros
 
 def processar_arquivo_action(df, key_prefix, dados_escola):
@@ -472,7 +506,9 @@ dados_escola = {
     "data_enc_eja1": data_enc_eja1 if 'data_enc_eja1' in locals() else None,
     "dias_eja1": dias_eja1 if 'dias_eja1' in locals() else None,
     "data_enc_eja2": data_enc_eja2 if 'data_enc_eja2' in locals() else None,
-    "dias_eja2": dias_eja2 if 'dias_eja2' in locals() else None
+    "dias_eja2": dias_eja2 if 'dias_eja2' in locals() else None,
+    "ofertou_eja_1": ofertou_eja_1 if 'ofertou_eja_1' in locals() else False,
+    "ofertou_eja_2": ofertou_eja_2 if 'ofertou_eja_2' in locals() else False
 }
 
 # COLUNA 1: Importar Arquivo Regular / EJA 1
