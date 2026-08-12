@@ -48,8 +48,7 @@ def formatar_cep(cep):
 
 # Header
 st.title("Gerador de Livro de Matrículas")
-st.markdown("Esta aplicação foi desenvolvida para o ano letivo de 2025.
-Não há garantias de que irá funcionar perfeitamente em outros anos letivos.")
+st.markdown("Esta aplicação foi desenvolvida para o ano letivo de 2025. Não há garantias de que irá funcionar perfeitamente em outros anos letivos.")
 st.write("---")
 
 # Painel de Dados (Sem st.form para permitir reatividade imediata)
