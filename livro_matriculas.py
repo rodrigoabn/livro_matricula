@@ -5,7 +5,7 @@ import re
 
 # Configuração da página
 st.set_page_config(
-    page_title="Gerador de Livro de Matrículas",
+    page_title="Gerador de Livro de Matrículas - 2025",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
@@ -48,7 +48,8 @@ def formatar_cep(cep):
 
 # Header
 st.title("Gerador de Livro de Matrículas")
-st.markdown("Converta sua planilha gerada no Suap no Livro de Matŕiculas!")
+st.markdown("Esta aplicação foi desenvolvida para o ano letivo de 2025.
+Não há garantias de que irá funcionar perfeitamente em outros anos letivos.")
 st.write("---")
 
 # Painel de Dados (Sem st.form para permitir reatividade imediata)
